@@ -50,6 +50,9 @@
 % reset title definition for all types and replace with url+string
  \DeclareFieldFormat*{title}{\usebibmacro{string+url}{#1}}
 
+% remove colon after "In"
+\renewcommand*{\intitlepunct}{\space}
+
 % BEGIN hyperref for full reference instead of year -- this makes the full Author (year) a link, not only the year.
 \DeclareFieldFormat{citehyperref}{%
   \DeclareFieldAlias{bibhyperref}{noformat}% Avoid nested links
