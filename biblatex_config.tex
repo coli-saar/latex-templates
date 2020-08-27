@@ -1,0 +1,95 @@
+% This file configures biblatex to have a style similar
+% to the ACL style.  It also has hyperref integration:
+% - URLs and DOIs are linked from each entry's title
+% - the full citation is a hyperlink to the bibliography instead of
+%   just the year
+%
+% This configuration uses biber instead of bibtex, i.e. you have to run
+% biber myfile
+% to generate the bibliography. This is GOOD thing because biber has
+% proper unicode support.
+
+% Usage:
+% put this file in the same directory
+% in your main tex file, add before begin{document}:
+%   \input biblatex_config
+%   \addbibresource{bibliographyfile.bib}
+%   (you can add multiple bib files that way)
+% and wherever you want to have your bibliography:
+% \printbibliography
+
+% author: Arne Köhn <arne@chark.eu>
+% License: do whatever you want with this.
+
+\usepackage[style=authoryear,
+,uniquename=false % otherwise, names are forced to be unique in the citation even with different years of the publication
+,uniquelist=false % allow several author lists to be shortened to the same first author
+,backref=false % shows cit. on p XX  in the bibliography
+,block=space % divide elements in a single bibliography entry by space
+,maxbibnames=99 % show up to 99 authors in the bibliography ...
+,maxcitenames=2 % ... but only up to two when citing (more are abbreviated to Author1 et al)
+,dashed=false % repeat author list in bibliography instead of having subsequent entries marked with -
+,doi=false % do not show doi (because we hyperlink them
+,url=false % same for url
+,date=year % only display the year, not month or day
+,backend=biber % use biber instead of bibtex. No legacy cruft that way.
+]{biblatex}
+
+% compatibility with older Mactex versions, https://tex.stackexchange.com/questions/311426/bibliography-error-use-of-blxbblverbaddi-doesnt-match-its-definition-ve/311428#311428
+\makeatletter
+\def\blx@maxline{77}
+\makeatother
+
+% Hyperlink the title with either the URL or the DOI
+% of the entry. adapted from
+% https://tex.stackexchange.com/questions/23832/biblatex-make-title-hyperlink-to-doi-url-if-available
+ \newbibmacro{string+url}[1]{%
+   \iffieldundef{url}{% no url -- see whether there is a doi
+     \iffieldundef{doi}{#1}{\href{https://dx.doi.org/\thefield{doi}}{#1}}%
+     }{\href{\thefield{url}}{#1}}}
+% reset title definition for all types and replace with url+string
+ \DeclareFieldFormat*{title}{\usebibmacro{string+url}{#1}}
+
+% BEGIN hyperref for full reference instead of year -- this makes the full Author (year) a link, not only the year.
+\DeclareFieldFormat{citehyperref}{%
+  \DeclareFieldAlias{bibhyperref}{noformat}% Avoid nested links
+  \bibhyperref{#1}}
+
+\DeclareFieldFormat{textcitehyperref}{%
+  \DeclareFieldAlias{bibhyperref}{noformat}% Avoid nested links
+  \bibhyperref{%
+    #1%
+    \ifbool{cbx:parens}
+      {\bibcloseparen\global\boolfalse{cbx:parens}}
+      {}}}
+
+\savebibmacro{cite}
+\savebibmacro{textcite}
+
+\renewbibmacro*{cite}{%
+  \printtext[citehyperref]{%
+    \restorebibmacro{cite}%
+    \usebibmacro{cite}}}
+
+\renewbibmacro*{textcite}{%
+  \ifboolexpr{
+    ( not test {\iffieldundef{prenote}} and
+      test {\ifnumequal{\value{citecount}}{1}} )
+    or
+    ( not test {\iffieldundef{postnote}} and
+      test {\ifnumequal{\value{citecount}}{\value{citetotal}}} )
+  }
+    {\DeclareFieldAlias{textcitehyperref}{noformat}}
+    {}%
+  \printtext[textcitehyperref]{%
+    \restorebibmacro{textcite}%
+    \usebibmacro{textcite}}}
+% END hyperref for full reference instead of year
+
+% make the natbib style citep and citet available
+\newcommand{\citep}[1]{\parencite{#1}}
+\newcommand{\citet}[1]{\textcite{#1}}
+
+% make the bibliography item separation fixed, in case someone
+% changes \itemsep.
+\renewcommand{\bibitemsep}{1ex}
